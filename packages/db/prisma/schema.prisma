@@ -6,79 +6,153 @@
 
 generator client {
   provider = "prisma-client-js"
-  output   = "../generated/prisma"
+  output   = "./generated"
 }
 
 datasource db {
   provider = "postgresql"
 }
 
-model User {
-  id        String   @id @default(uuid())
-  email     String   @unique
-  name      String?
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+// model User {
+//   id        String   @id @default(uuid())
+//   email     String   @unique
+//   name      String?
+//   createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz
+//   updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz
 
-  ridePlans RidePlan[]
+//   // ridePlans RidePlan[]
 
-  @@map("user")
-}
+//   @@map("user")
+// }
 
-model RidePlan {
-  id     String @id @default(uuid())
-  userId String
-  user   User   @relation(fields: [userId], references: [id])
+model Plan {
+  id       String   @id @default(uuid())
+  title    String
+  rideDate DateTime @map("ride_date")
+  // userId String
+  // user   User   @relation(fields: [userId], references: [id])
 
   startLat Float
   startLng Float
 
-  durationMinutes Int
-  avgSpeed        Float
+  endLat Float
+  endLng Float
+
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz
+
+  // ridePlanTimelines    RidePlanTimeline[]
+  // placeRecommendations PlaceRecommendation[]
+  route           Route?
+  places          Place[]
+  recommendations Recommendation[]
+
+  @@map("plan")
+}
+
+model Route {
+  id     String @id @default(uuid())
+  planId String @unique @map("plan_id")
+
+  distance Float
+  duration Int
+  polyline String
+
+  plan Plan @relation(fields: [planId], references: [id], onDelete: Cascade)
 
   createdAt DateTime @default(now())
 
-  ridePlanTimelines    RidePlanTimeline[]
-  placeRecommendations PlaceRecommendation[]
-
-  @@map("ride_plan")
-}
-
-// 라이딩 계획의 타임라인
-// AI based data
-model RidePlanTimeline {
-  id     String   @id @default(uuid())
-  planId String   @map("plan_id")
-  plan   RidePlan @relation(fields: [planId], references: [id])
-
-  order    Int
-  title    String
-  startMin Int    @map("start_min")
-  endMin   Int    @map("end_min")
-
-  @@map("ride_plan_timeline")
+  @@map("route")
 }
 
 model Place {
-  id   String @id
-  name String
-  lat  Float
-  lng  Float
+  id     String @id @default(uuid())
+  planId String @map("plan_id")
 
-  placeRecommendations PlaceRecommendation[]
+  name     String
+  category String
+  lat      Float
+  lng      Float
+
+  rating  Float?
+  address String?
+  source  PlaceSource
+
+  plan Plan @relation(fields: [planId], references: [id])
+
+  createdAt DateTime @default(now())
 
   @@map("place")
 }
 
-model PlaceRecommendation {
-  id      String @id @default(uuid())
-  planId  String @map("plan_id")
-  placeId String @map("place_id")
-
-  plan  RidePlan @relation(fields: [planId], references: [id])
-  place Place    @relation(fields: [placeId], references: [id])
-
-  reason String
-
-  @@map("place_recommendation")
+enum PlaceSource {
+  KAKAO
+  NAVER
+  GOOGLE
 }
+
+model Recommendation {
+  id     String @id @default(uuid())
+  planId String @unique @map("plan_id")
+
+  summary  String // "라이딩 후 가볍게 먹기 좋아요"
+  placeIds String[] // 추천 장소 id 목록
+
+  createdAt DateTime @default(now())
+
+  /// 예시 프롬프트
+  //   {
+  //   "rideDistance": 28.4,
+  //   "rideDuration": 5400,
+  //   "endLocation": "성수동",
+  //   "places": [
+  //     {
+  //       "name": "OO국수",
+  //       "rating": 4.6,
+  //       "category": "한식"
+  //     }
+  //   ]
+  // }
+  plan Plan @relation(fields: [planId], references: [id], onDelete: Cascade)
+
+  @@map("recommendation")
+}
+
+// 라이딩 계획의 타임라인
+// AI based data
+// model RidePlanTimeline {
+//   id     String @id @default(uuid())
+//   planId String @map("plan_id")
+//   plan   Plan   @relation(fields: [planId], references: [id])
+
+//   order    Int
+//   title    String
+//   startMin Int    @map("start_min")
+//   endMin   Int    @map("end_min")
+
+//   @@map("ride_plan_timeline")
+// }
+
+// model Place {
+//   id   String @id
+//   name String
+//   lat  Float
+//   lng  Float
+
+//   placeRecommendations PlaceRecommendation[]
+
+//   @@map("place")
+// }
+
+// model PlaceRecommendation {
+//   id      String @id @default(uuid())
+//   planId  String @map("plan_id")
+//   placeId String @map("place_id")
+
+//   plan  Plan  @relation(fields: [planId], references: [id])
+//   place Place @relation(fields: [placeId], references: [id])
+
+//   reason String
+
+//   @@map("place_recommendation")
+// }
