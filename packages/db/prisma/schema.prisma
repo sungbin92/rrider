@@ -1,0 +1,84 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+  output   = "../generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model User {
+  id        String   @id @default(uuid())
+  email     String   @unique
+  name      String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  ridePlans RidePlan[]
+
+  @@map("user")
+}
+
+model RidePlan {
+  id     String @id @default(uuid())
+  userId String
+  user   User   @relation(fields: [userId], references: [id])
+
+  startLat Float
+  startLng Float
+
+  durationMinutes Int
+  avgSpeed        Float
+
+  createdAt DateTime @default(now())
+
+  ridePlanTimelines    RidePlanTimeline[]
+  placeRecommendations PlaceRecommendation[]
+
+  @@map("ride_plan")
+}
+
+// 라이딩 계획의 타임라인
+// AI based data
+model RidePlanTimeline {
+  id     String   @id @default(uuid())
+  planId String   @map("plan_id")
+  plan   RidePlan @relation(fields: [planId], references: [id])
+
+  order    Int
+  title    String
+  startMin Int    @map("start_min")
+  endMin   Int    @map("end_min")
+
+  @@map("ride_plan_timeline")
+}
+
+model Place {
+  id   String @id
+  name String
+  lat  Float
+  lng  Float
+
+  placeRecommendations PlaceRecommendation[]
+
+  @@map("place")
+}
+
+model PlaceRecommendation {
+  id      String @id @default(uuid())
+  planId  String @map("plan_id")
+  placeId String @map("place_id")
+
+  plan  RidePlan @relation(fields: [planId], references: [id])
+  place Place    @relation(fields: [placeId], references: [id])
+
+  reason String
+
+  @@map("place_recommendation")
+}
