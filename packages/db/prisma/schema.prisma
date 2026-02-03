@@ -13,24 +13,26 @@ datasource db {
   provider = "postgresql"
 }
 
-// model User {
-//   id        String   @id @default(uuid())
-//   email     String   @unique
-//   name      String?
-//   createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz
-//   updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz
+model User {
+  id           String   @id @default(uuid())
+  email        String   @unique
+  name         String?
+  passwordHash String?  @map("password_hash") // nullable for OAuth users
+  createdAt    DateTime @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt    DateTime @updatedAt @map("updated_at") @db.Timestamptz
 
-//   // ridePlans RidePlan[]
+  plans        Plan[]
+  stravaTokens StravaToken[]
 
-//   @@map("user")
-// }
+  @@map("user")
+}
 
 model Plan {
   id       String   @id @default(uuid())
   title    String
   rideDate DateTime @map("ride_date")
-  // userId String
-  // user   User   @relation(fields: [userId], references: [id])
+  userId   String?  @map("user_id")
+  user     User?    @relation(fields: [userId], references: [id])
 
   startLat Float
   startLng Float
@@ -181,12 +183,17 @@ model Segment {
 }
 
 model StravaToken {
-  id           String   @id @default(uuid())
-  accessToken  String   @map("access_token")
-  refreshToken String   @map("refresh_token")
-  expiresAt    Int      @map("expires_at")
-  createdAt    DateTime @default(now()) @map("created_at")
-  updatedAt    DateTime @updatedAt @map("updated_at")
+  id              String   @id @default(uuid())
+  userId          String?  @map("user_id")
+  stravaAthleteId Int?     @map("strava_athlete_id")
+  accessToken     String   @map("access_token")
+  refreshToken    String   @map("refresh_token")
+  expiresAt       Int      @map("expires_at")
+  createdAt       DateTime @default(now()) @map("created_at")
+  updatedAt       DateTime @updatedAt @map("updated_at")
 
+  user User? @relation(fields: [userId], references: [id])
+
+  @@unique([userId])
   @@map("strava_token")
 }

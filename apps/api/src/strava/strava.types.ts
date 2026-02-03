@@ -42,6 +42,11 @@ export interface StravaTokenResponse {
   refresh_token: string;
   expires_at: number;
   token_type: string;
+  athlete: {
+    id: number;
+    firstname: string;
+    lastname: string;
+  };
 }
 
 export interface BoundingBox {
