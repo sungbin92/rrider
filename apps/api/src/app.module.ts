@@ -7,6 +7,7 @@ import { RouteModule } from './route/route.module';
 import { PlaceModule } from './place/place.module';
 import { ConfigModule } from '@nestjs/config';
 import { RecommendationModule } from './recommendation/recommendation.module';
+import { SegmentModule } from './segment/segment.module';
 
 @Module({
   imports: [
@@ -16,6 +17,7 @@ import { RecommendationModule } from './recommendation/recommendation.module';
     PlaceModule,
     ConfigModule.forRoot({ isGlobal: true }),
     RecommendationModule,
+    SegmentModule,
   ],
   controllers: [AppController],
   providers: [AppService],

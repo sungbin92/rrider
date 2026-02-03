@@ -43,9 +43,11 @@ model Plan {
 
   // ridePlanTimelines    RidePlanTimeline[]
   // placeRecommendations PlaceRecommendation[]
-  route           Route?
-  places          Place[]
-  recommendations Recommendation[]
+  route          Route?
+  places         Place[]
+  recommendation Recommendation?
+
+  waypoints Json? // [{lat, lng, order}]
 
   @@map("plan")
 }
@@ -57,6 +59,11 @@ model Route {
   distance Float
   duration Int
   polyline String
+
+  instructions     Json? // GraphHopper route instructions
+  snappedWaypoints Json? // Road-snapped waypoint coordinates [[lat, lng], ...]
+
+  segments Segment[]
 
   plan Plan @relation(fields: [planId], references: [id], onDelete: Cascade)
 
@@ -95,25 +102,13 @@ model Recommendation {
   id     String @id @default(uuid())
   planId String @unique @map("plan_id")
 
-  summary  String // "라이딩 후 가볍게 먹기 좋아요"
-  placeIds String[] // 추천 장소 id 목록
+  summary              String   // "라이딩 후 가볍게 먹기 좋아요"
+  placeIds             String[] // 추천 장소 id 목록
+  estimatedTotalTimeMin Int?     @map("estimated_total_time_min") // 총 예상 시간(분)
+  suggestedStops       Json?    @map("suggested_stops") // [{placeId, type, reason}]
 
   createdAt DateTime @default(now())
-
-  /// 예시 프롬프트
-  //   {
-  //   "rideDistance": 28.4,
-  //   "rideDuration": 5400,
-  //   "endLocation": "성수동",
-  //   "places": [
-  //     {
-  //       "name": "OO국수",
-  //       "rating": 4.6,
-  //       "category": "한식"
-  //     }
-  //   ]
-  // }
-  plan Plan @relation(fields: [planId], references: [id], onDelete: Cascade)
+  plans     Plan     @relation(fields: [planId], references: [id], onDelete: Cascade)
 
   @@map("recommendation")
 }
@@ -156,3 +151,42 @@ model Recommendation {
 
 //   @@map("place_recommendation")
 // }
+
+model Segment {
+  id      String @id @default(uuid())
+  routeId String @map("route_id")
+
+  stravaId       Int    @map("strava_id")
+  name           String
+  climbCategory  Int    @map("climb_category") // 0=NC, 1-5
+  avgGrade       Float  @map("avg_grade")
+  startLat       Float  @map("start_lat")
+  startLng       Float  @map("start_lng")
+  endLat         Float  @map("end_lat")
+  endLng         Float  @map("end_lng")
+  elevDifference Float  @map("elev_difference")
+  distance       Float
+  polyline       String?
+
+  effortCount  Int? @map("effort_count")
+  athleteCount Int? @map("athlete_count")
+  starCount    Int? @map("star_count")
+
+  route Route @relation(fields: [routeId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@unique([routeId, stravaId])
+  @@map("segment")
+}
+
+model StravaToken {
+  id           String   @id @default(uuid())
+  accessToken  String   @map("access_token")
+  refreshToken String   @map("refresh_token")
+  expiresAt    Int      @map("expires_at")
+  createdAt    DateTime @default(now()) @map("created_at")
+  updatedAt    DateTime @updatedAt @map("updated_at")
+
+  @@map("strava_token")
+}
