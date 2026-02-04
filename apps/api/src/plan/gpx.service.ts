@@ -15,8 +15,6 @@ export class GpxService {
       where: { id: planId },
       include: {
         route: true,
-        places: true,
-        recommendation: true,
       },
     });
 
@@ -31,9 +29,6 @@ export class GpxService {
     if (!plan.route) {
       throw new NotFoundException('Route not found');
     }
-
-    // Get recommended place IDs
-    const recommendedPlaceIds = new Set(plan.recommendation?.placeIds || []);
 
     // GPX 문서 생성
     const doc = create({ version: '1.0', encoding: 'UTF-8' })
@@ -97,36 +92,6 @@ export class GpxService {
         wpt.ele('sym').txt('Flag, Blue');
       });
     }
-
-    // Add places as POI with appropriate symbols
-    plan.places.forEach((place) => {
-      const isCafe =
-        place.category.toLowerCase().includes('카페') ||
-        place.category.toLowerCase().includes('cafe');
-      const isRecommended = recommendedPlaceIds.has(place.id);
-
-      const wpt = doc.ele('wpt', {
-        lat: place.lat.toFixed(6),
-        lon: place.lng.toFixed(6),
-      });
-      wpt.ele('name').txt(place.name);
-
-      const descParts = [place.category];
-      if (isRecommended) {
-        descParts.push('AI 추천');
-      }
-      wpt.ele('desc').txt(descParts.join(' - '));
-
-      // Add symbol based on type
-      if (isCafe) {
-        wpt.ele('sym').txt('Cafe');
-      } else {
-        wpt.ele('sym').txt('Restaurant');
-      }
-
-      // Add type extension for better compatibility
-      wpt.ele('type').txt(isCafe ? 'Cafe' : 'Restaurant');
-    });
 
     // 트랙 생성
     const trk = doc.ele('trk');

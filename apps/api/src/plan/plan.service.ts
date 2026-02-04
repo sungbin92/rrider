@@ -79,4 +79,42 @@ export class PlanService {
       },
     });
   }
+
+  async update(
+    id: string,
+    userId: string,
+    data: {
+      startLat?: number;
+      startLng?: number;
+      endLat?: number;
+      endLng?: number;
+      waypoints?: Array<{ lat: number; lng: number }> | null;
+    },
+  ) {
+    // Check ownership
+    const plan = await this.prisma.client.plan.findUnique({
+      where: { id },
+    });
+
+    if (!plan) {
+      throw new NotFoundException('Plan not found');
+    }
+
+    if (plan.userId !== userId) {
+      throw new ForbiddenException('Access denied');
+    }
+
+    return this.prisma.client.plan.update({
+      where: { id },
+      data: {
+        ...(data.startLat !== undefined && { startLat: data.startLat }),
+        ...(data.startLng !== undefined && { startLng: data.startLng }),
+        ...(data.endLat !== undefined && { endLat: data.endLat }),
+        ...(data.endLng !== undefined && { endLng: data.endLng }),
+        ...(data.waypoints !== undefined && {
+          waypoints: data.waypoints ?? Prisma.JsonNull,
+        }),
+      },
+    });
+  }
 }

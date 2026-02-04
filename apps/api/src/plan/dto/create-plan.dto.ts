@@ -1,4 +1,4 @@
-import { IsDateString, IsNumber, IsString } from 'class-validator';
+import { IsDateString, IsNumber, IsOptional, IsString } from 'class-validator';
 
 export class CreatePlanDto {
   @IsString()
@@ -18,4 +18,14 @@ export class CreatePlanDto {
 
   @IsNumber()
   endLng: number;
+
+  @IsOptional()
+  waypoints?: { lat: number; lng: number }[];
+
+  @IsOptional()
+  route?: {
+    distance: number;
+    duration: number;
+    polyline: string;
+  };
 }

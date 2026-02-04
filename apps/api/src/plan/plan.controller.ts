@@ -5,12 +5,14 @@ import {
   Header,
   NotFoundException,
   Param,
+  Patch,
   Post,
   StreamableFile,
 } from '@nestjs/common';
 import { PlanService } from './plan.service';
 import { GpxService } from './gpx.service';
 import { CreatePlanDto } from './dto/create-plan.dto';
+import { UpdatePlanDto } from './dto/update-plan.dto';
 import { CurrentUser } from '../auth/decorators/current-user.decorator';
 import type { CurrentUserData } from '../auth/decorators/current-user.decorator';
 
@@ -36,6 +38,15 @@ export class PlanController {
   @Get(':id')
   findOne(@Param('id') id: string, @CurrentUser() user: CurrentUserData) {
     return this.planService.findOne(id, undefined, user.id);
+  }
+
+  @Patch(':id')
+  update(
+    @Param('id') id: string,
+    @Body() updatePlanDto: UpdatePlanDto,
+    @CurrentUser() user: CurrentUserData,
+  ) {
+    return this.planService.update(id, user.id, updatePlanDto);
   }
 
   @Get()
